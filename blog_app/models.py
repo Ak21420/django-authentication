@@ -20,7 +20,8 @@ class Post(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     content = models.TextField()
-    image = models.ImageField(default='default.jpg', upload_to='profile_pics')
+    image_link = models.CharField(max_length=255, null=True)
+    image = models.FileField(upload_to='profile_pics', null=True)
     liked = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='liked')
     date_posted = models.DateTimeField(default=timezone.now)
     delete_status = models.BooleanField(default=False, null=True)
@@ -54,6 +55,7 @@ class Comment(models.Model):
     text = models.TextField()
     created_date = models.DateTimeField(default=timezone.now)
     approved_comment = models.BooleanField(default=True)
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', on_delete=models.CASCADE)
 
     def approve(self):
         self.approved_comment = True
@@ -63,7 +65,26 @@ class Comment(models.Model):
         return reverse("post_list")
 
     def __str__(self):
-        return self.author
+        print(type(self.author.username))
+        return self.author.username
+
+# class subComment(models.Model):
+#     post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
+#     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+#     comment = models.ForeignKey(comment, on_delete=models.CASCADE)
+#     text = models.TextField()
+#     created_date = models.DateTimeField(default=timezone.now)
+#     approved_comment = models.BooleanField(default=True)
+
+#     def approve(self):
+#         self.approved_comment = True
+#         self.save()
+
+#     def get_absolute_url(self):
+#         return reverse("post_list")
+
+#     def __str__(self):
+#         return self.author
 
 
 # Create your models here.

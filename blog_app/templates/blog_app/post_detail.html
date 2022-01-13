@@ -39,8 +39,21 @@
     <hr>
 
     <!-- Preview Image -->
-    <img class="img-fluid rounded" src="{{object.image.url}}" alt="">
-    <hr>
+    <!-- {% if object.image %}
+        <img class="img-fluid rounded" src="{{object.image.url}}" alt="">
+        <video name='demo' controls autoplay width='50%' height='40%'>
+            <source src="{{object.image.url}}" type="video/mp4" alt="">
+        </video>
+        <hr>
+    {% endif %} -->
+
+    {% if object.image.url|slice:"-4:" == ".jpg" or object.image.url|slice:"-4:" == ".png" or object.image.url|slice:"-4:" == ".jpeg" or object.image.url|slice:"-4:" == ".gif" %}
+            <img class="img-fluid rounded" src="{{object.image.url}}" alt="">
+    {% elif object.image.url|slice:"-4:" == ".mp4" or object.image.url|slice:"-4:" == ".avi" %}
+        <video name='demo' controls autoplay width='50%' height='40%'>
+            <source src="{{object.image.url}}" type="video/mp4" alt="">
+        </video>
+    {% endif %}
 
     <!-- Post Content -->
     <p class="lead">{{ object.content|safe|linebreaks }}</p>
@@ -88,12 +101,44 @@
     {% for comment in post.comments.all %}
     {% if comment.approved_comment %}
     <div class="media mb-4">
-        <img class="d-flex mr-3 rounded-circle article-img" src="{{ comment.author.profile.image.url }}" alt="">
-        <div class="media-body">
-            <h5 class="mt-0"><a href="{% url 'user_posts' comment.author.username %}">{{ comment.author }}</a></h5>
-            {{ comment.text|linebreaks }}
+
+        {% if not comment.parent_id %}
+            <img class="d-flex mr-3 rounded-circle article-img" src="{{ comment.author.profile.image.url }}" alt="">
+            <div class="media-body">
+                <h5 class="mt-0"><a href="{% url 'user_posts' comment.author.username %}">{{ comment.author }}</a></h5>
+                {{ comment.text|linebreaks }}
+        
+
+            {% for replay in comment.replies.all %}
+                <p class="info">{{ replay.author }}</p>
+                <li>{{ replay.text }}</li>
+            {% endfor %}
+            
+            {% if user.is_authenticated %}
+                <h5>Replay</h5>
+
+                <form method="POST" action="{% url 'add_comment' object.id %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <textarea class="form-control" name="text" rows="3" required></textarea>
+                        <input type="hidden" name="parent_id" value="{{comment.id}}">
+                        <input type="hidden" name="user_id" value="{{user.id}}">
+                    </div>
+                    <button class="btn btn-primary" type="submit">Replay</button>
+                </form>
+            {% endif %}
+                
+            <!-- <form action="." method="post" action="{% url 'add_comment' object.id %}">
+                {{ comment_form.as_p }}
+                {% csrf_token %} -->
+                <!-- Hidden input for parent comment.id -->
+                <!-- <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                <input class="btn btn-primary" type="submit" value="Replay">
+            </form> -->
+
             <hr>
         </div>
+        {% endif %}
     </div>
     {% else %}
     <div class="alert alert-secondary" role="alert">

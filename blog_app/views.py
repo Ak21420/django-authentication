@@ -1,12 +1,20 @@
+from django import http
+from django.core.mail import message
 from django.http import request
 from .models import Post, Comment
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from datetime import datetime
 from django.db.models import Q, F
+from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .forms import PostForm
+from .forms import PostForm, CommentForm
+from django.core.exceptions import ValidationError
+
+from django.db import models
+
 from django.views.generic import (
     CreateView,
     ListView,
@@ -29,9 +37,9 @@ class PostListView(ListView):
             keyword = ''
         if (keyword != ''):
             object_list = self.model.objects.filter(
-                Q(content__icontains=keyword) | Q(title__icontains=keyword))
+                Q(content__icontains=keyword) | Q(title__icontains=keyword), delete_status = False)
         else:
-            object_list = self.model.objects.all()
+            object_list = self.model.objects.filter(delete_status = False)
             # print(object_list)
         return object_list
 
@@ -46,16 +54,14 @@ class UserPostListView(ListView):
         user = get_object_or_404(User, username=self.kwargs.get('username'))
         
         if self.request.user.is_superuser:
-            return Post.objects.filter(author=user).order_by('-date_posted')
+            return Post.objects.filter(author=user, delete_status = False).order_by('-date_posted')
         if user == self.request.user:
-            return Post.objects.filter(author=user).order_by('-date_posted')
+            return Post.objects.filter(author=user, delete_status = False).order_by('-date_posted')
         else:
-            return Post.objects.filter(author=user, private = False).order_by('-date_posted')
-            
+            return Post.objects.filter(author=user, private = False, delete_status = False).order_by('-date_posted')
 
 class PostDetailView(DetailView):
     model = Post
-
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
@@ -63,6 +69,10 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.author = self.request.user
+
+        # print('--------------')
+        # print(request.POST.get('image_link'))
+
         return super().form_valid(form)
     
     # def save_details(self, form, request):
@@ -74,7 +84,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
-    fields = ['title', 'content', 'image']
+    fields = ['title', 'content', 'image', 'image_link']
 
     def form_valid(self, form):
         form.instance.author = self.request.user
@@ -85,53 +95,27 @@ class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         if self.request.user == post.author or self.request.user.is_superuser:
             return True
         return False
-
-# class DeletePost(DeleteView):
-# class DeletePostView(DeleteView):
-
-#     model = Post
-
-#     def delete(self, *args, **kwargs):
-#         self.object = self.get_object()
-#         self.object.delete_status = True
-#         self.object.save()
-#         print('HERE------------------')
-        
-#         return super(DeletePostView, self).delete(*args, **kwargs)
-    # def delete(self):
     
+    # def clean(self):
+    #     cleaned_data = super().clean()
+    #     image = cleaned_data.get("image")
+    #     image_link = cleaned_data.get("image_link")
 
-# class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
-#     model = Post
-#     success_url = '/'
-#     fields = ['delete_status']
-
-#     # def form_valid(self, form):
-#     #     form.instance.author = self.request.user
-#     #     form.instance.delete_status = True
-#     #     return super().form_valid(form)
-
-#     # def delete(self, *args, **kwargs):
-#     #     self.object = self.get_object()
-#     #     self.object.delete_status = True
-#     #     self.object.save()
-#     #     print('HERE------------------')
-#     #     return super(PostDeleteView, self).delete(*args, **kwargs)
-
-#     def test_func(self):
-#         post = self.get_object()
-#         # post.delete_status = True
-#         # post.save()
-#         if self.request.user == post.author or self.request.user.is_superuser:
-#             return True
-#             # return render('blog_app/post_confirm_delete.html')
-#             # pass
-#         return False
-
+    #     if image and image_link:
+    #         raise ValidationError("Only one field can be fill at a time.")
+    #     elif not image and not image_link:
+    #         raise ValidationError("Fill a Image link or upload a Image/Gif/Video")
       
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
     success_url = '/'
+
+    def form_valid(self, form):
+        success_url = self.get_success_url()
+        # self.object.delete()
+        self.object.delete_status = True
+        self.object.save()
+        return HttpResponseRedirect(success_url)
 
     def test_func(self):
         post = self.get_object()
@@ -149,7 +133,20 @@ def add_comment(request, pk):
     if request.method == 'POST':
         user = User.objects.get(id=request.POST.get('user_id'))
         text = request.POST.get('text')
-        Comment(author=user, post=post, text=text).save()
+        
+        parent_obj = None
+        try:
+            parent_id = int(request.POST.get('parent_id'))
+        except:
+            parent_id = None
+
+        if parent_id:
+            parent_obj = Comment.objects.get(id=parent_id)
+            if parent_obj:
+                Comment(author = user, post = post, text = text, parent_id = parent_id).save()
+        else:
+            Comment(author=user, post=post, text=text).save()
+
         messages.success(request, "Your comment has been added successfully.")
     else:
         return redirect('post_detail', pk=pk)
