@@ -28,8 +28,10 @@ SECRET_KEY = 'django-insecure-k$zi^8_t^t57%57od2=g!meb3#bua&878uju_2q#8cz3&6lwv0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = ['https://myblog-auth.herokuapp.com',
+# 'localhost',
+# '127.0.0.1']
 
 # Application definition
 
@@ -94,12 +96,19 @@ WSGI_APPLICATION = 'blog.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': 'blog',
+    #     'USER': 'admin',
+    #     'PASSWORD': 'admin',
+    #     'HOST': 'localhost'
+    # }
+     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'blog',
-        'USER': 'admin',
-        'PASSWORD': 'admin',
-        'HOST': 'localhost'
+        'NAME': 'd5ngdffc77q8qa',
+        'USER': 'vtvyjnyhahewgm',
+        'PASSWORD': 'dfbc9485489ce4340a1722f4027a7bdcfb1f9404e267e47a8783a567462a63c3',
+        'HOST': 'ec2-3-227-15-75.compute-1.amazonaws.com'
     }
 }
 

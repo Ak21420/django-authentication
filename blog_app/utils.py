@@ -19,7 +19,7 @@ class Calendar(HTMLCalendar):
             d += f'<li> {event.title} </li>'
 
         if day != 0:
-            print(date.today())
+            # print(date.today())
             if d:
                 return f"<td style='background-color:pink'><span class='date'>{day}</span><ul> {d} </ul></td>"
             elif date.today().day == day:
