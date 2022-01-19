@@ -8,12 +8,14 @@ class PostForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['image'].required = False
         self.fields['image_link'].required = False
+        self.fields['date_posted'].input_formats = ('%Y-%m-%dT%H:%M',)
     class Meta:
         model = Post
         fields = ['title', 'content', 'image', 'image_link']
 
         widgets = {
-            'content': forms.Textarea(attrs={'class': 'editable medium-editor-textarea'})
+            'content': forms.Textarea(attrs={'class': 'editable medium-editor-textarea'}),
+            'date_posted': forms.DateInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M')
         }
     
     def clean(self):

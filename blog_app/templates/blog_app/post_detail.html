@@ -46,13 +46,17 @@
         </video>
         <hr>
     {% endif %} -->
-
-    {% if object.image.url|slice:"-4:" == ".jpg" or object.image.url|slice:"-4:" == ".png" or object.image.url|slice:"-4:" == ".jpeg" or object.image.url|slice:"-4:" == ".gif" %}
+    
+    {% if object.image %}
+        {% if object.image.url|slice:"-4:" == ".jpg" or object.image.url|slice:"-4:" == ".png" or object.image.url|slice:"-4:" == ".jpeg" or object.image.url|slice:"-4:" == ".gif" %}
             <img class="img-fluid rounded" src="{{object.image.url}}" alt="">
-    {% elif object.image.url|slice:"-4:" == ".mp4" or object.image.url|slice:"-4:" == ".avi" %}
-        <video name='demo' controls autoplay width='50%' height='40%'>
-            <source src="{{object.image.url}}" type="video/mp4" alt="">
-        </video>
+        {% elif object.image.url|slice:"-4:" == ".mp4" or object.image.url|slice:"-4:" == ".avi" %}
+            <video name='demo' controls autoplay width='50%' height='40%'>
+                <source src="{{object.image.url}}" type="video/mp4" alt="">
+            </video>
+        {% endif %}
+    {% else %}
+        <img class="img-fluid rounded" src="{{object.image_link}}" alt="{{object.image_link}}">
     {% endif %}
 
     <!-- Post Content -->

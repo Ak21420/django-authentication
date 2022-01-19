@@ -24,5 +24,7 @@ urlpatterns = [
     path('post/<int:pk>/private/', make_private, name='post_private'),
     path('post/<int:pk>/public/', make_public, name='post_public'),
     path('post/<int:pk>/comment/', add_comment, name='add_comment'),
+    path('post/calendar/', views.CalendarView.as_view(), name='calendar'), # here
+
     # path('post/<int:pk>/comment/', add_comment, name='add_comment'),
 ]
